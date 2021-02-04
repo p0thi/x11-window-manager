@@ -1,0 +1,10 @@
+version: '2'
+services:
+  main:
+    restart: always
+    build: ./
+    privileged: true
+    labels:
+      io.balena.features.dbus: '1'
+    devices:
+      - "/dev/dri/card0:/dev/dri/card0"

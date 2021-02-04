@@ -1,4 +1,13 @@
-FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:stretch-run
+# FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:stretch-run
+FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:buster-run
+
+RUN apt update && \
+  apt update - && \
+  apt install -y apt-utils && \
+  apt install -y libgl1-mesa-dri && \
+  apt install -y libgles2-mesa libsdl2-dev && \
+  # Symlink drivers into /usr/lib/dri (if not exists)...
+  ln -s /usr/lib/x86_64-linux-gnu/dri /usr/lib/dri
 
 # Install XORG
 RUN install_packages xserver-xorg=1:7.7+19 \
@@ -8,14 +17,22 @@ RUN install_packages xserver-xorg=1:7.7+19 \
   xfce4-terminal \
   x11-xserver-utils \
   dbus-x11 \
+  chromium=87.0.4280.141-0.1~deb10u1 \
   matchbox-keyboard \
   xterm
 
-
-# Disable screen from turning it off
 RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
   && echo "" >> /etc/X11/xinit/xserverrc \
-  && echo 'exec /usr/bin/X -s 0 dpms' >> /etc/X11/xinit/xserverrc 
+  && echo 'exec /usr/bin/X -s 0 dpms -nocursor -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
+
+# RUN mkdir /home/root
+# Disable screen from turning it off
+RUN echo "#!/bin/bash" > /start_chrome.sh \
+  && echo "" >> /start_chrome.sh \
+  && echo 'CHROMIUM_FLAGS="--no-sandbox --user-data-dir --window-size=1920,1080 --window-position=0,0 --disable-session-crashed-bubble --disable-features=TranslateUI,InfiniteSessionRestore --disable-infobars -a --use-skia-deferred-display-list --show-component-extension-options --ignore-gpu-blacklist --enable-remote-extensions "' >> /start_chrome.sh \ \
+  # && echo 'CHROMIUM_FLAGS="--show-component-extension-options --ignore-gpu-blacklist --disable-background-networking --disable-gpu --enable-remote-extensions --enable-native-gpu-memory-buffers --disable-quic --enable-fast-unload --enable-tcp-fast-open --disable-gpu-compositing --force-gpu-rasterization --enable-zero-copy"' >> /start_chrome.sh \ \
+  && echo 'chromium $DISPLAY_URL $CHROMIUM_FLAGS' >> /start_chrome.sh 
+  
 
 # Setting working directory
 WORKDIR /usr/src/app
